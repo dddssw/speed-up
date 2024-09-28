@@ -17,7 +17,26 @@
         "command": "speed-up.helloWorld",
         "title": "Hello World"
       }
-    ]
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "hooks",
+          "name": "Hooks"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "title": "Speed Import Configuration",
+      "properties": {
+        "speedImport.hooksPath": {
+          "type": "string",
+          "default": "src/hooks",
+          "description": "Path to hooks for speed import"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "pnpm run package",
@@ -45,6 +64,6 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "exportinfo": "^1.0.2"
+    "exportinfo": "^1.0.7"
   }
 }
