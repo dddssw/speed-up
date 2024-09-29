@@ -43,6 +43,7 @@ export default class hookTreeProvide
     if (!this.rootPath) {
       return Promise.resolve([]);
     }
+    //根
     if (!element) {
       const fileArr = await getFilesAndExtensions(this.hooksPath);
       fileArr.forEach((item) => {
@@ -62,6 +63,20 @@ export default class hookTreeProvide
               : vscode.ThemeIcon.File;
         });
         return fileArr;
+      }
+      //文件导出的函数
+      else if (element.returnData && element.returnData.length > 0) {
+        element.returnData.forEach((item) => {
+          item.label = item.returnName;
+          item.tooltip = item.comment;
+          item.collapsibleState = 0;
+            item.iconPath = new vscode.ThemeIcon(
+              item.type.includes("Function")
+                ? "symbol-function"
+                : "symbol-field"
+            );
+        });
+        return element.returnData;
       } else {
         const code = await fs.readFile(element.fullPath, "utf-8");
         const exportInfo = getExportInfo(code, element.label);
@@ -69,7 +84,11 @@ export default class hookTreeProvide
         exportInfo.forEach((item) => {
           item.label = item.name;
           item.tooltip = item.comment;
-          item.collapsibleState = item.returnData.length === 0 ? 0 : 1;
+          item.collapsibleState = !item.returnData
+            ? 0
+            : item.returnData?.length === 0
+            ? 0
+            : 1;
           item.iconPath = new vscode.ThemeIcon(
             item.type.includes("Function") ? "symbol-function" : "symbol-field"
           );
