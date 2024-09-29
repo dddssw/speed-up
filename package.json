@@ -17,6 +17,31 @@
         "command": "speed-up.helloWorld",
         "title": "Hello World"
       }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "id": "hooks",
+          "name": "hooks"
+        }
+      ]
+    },
+    "configuration": [
+      {
+        "title": "Speed Import",
+        "properties": {
+          "speedImport.hooksPath": {
+            "type": "string",
+            "default": "src/hooks",
+            "description": "hooks路径"
+          },
+          "speedImport.hooksAliasPath": {
+            "type": "string",
+            "default": "@/hooks",
+            "description": "hooks路径别名"
+          }
+        }
+      }
     ]
   },
   "scripts": {
@@ -32,7 +57,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.7",
-    "@types/node": "20.x",
+    "@types/node": "^20.16.9",
     "@types/vscode": "^1.93.0",
     "@typescript-eslint/eslint-plugin": "^8.3.0",
     "@typescript-eslint/parser": "^8.3.0",
@@ -43,8 +68,5 @@
     "typescript": "^5.5.4",
     "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4"
-  },
-  "dependencies": {
-    "exportinfo": "^1.0.2"
   }
 }
