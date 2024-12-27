@@ -2,7 +2,9 @@
   "name": "speed-up",
   "displayName": "speed up",
   "description": "speed up your import and commment code  ",
-  "version": "0.0.1",
+  "version": "0.0.4",
+  "publisher": "dddssw",
+  "icon": "icon.png",
   "engines": {
     "vscode": "^1.54.0"
   },
@@ -14,15 +16,102 @@
   "contributes": {
     "commands": [
       {
-        "command": "speed-up.helloWorld",
-        "title": "Hello World"
+        "command": "speed-up.openFile",
+        "title": "Open File"
+      },
+      {
+        "command": "speed-up.openFileAndScroll",
+        "title": "Open File With Scroll"
+      },
+      {
+        "command": "speed-up.importUtil",
+        "title": "导入工具方法",
+        "icon": "resources/dark/import.png"
+      },
+      {
+        "command": "speed-up.importHook",
+        "title": "全部导入hooks中return的部分",
+        "icon": "resources/dark/import.png"
+      },
+      {
+        "command": "speed-up.importHookPart",
+        "title": "部分导入hooks中return的部分",
+        "icon": "resources/dark/importPart.png"
+      },
+      {
+        "command": "speed-up.replaceEditContent",
+        "title": "替换当前编辑器文本内容"
+      },
+      {
+        "command": "speed-up.addEditContent",
+        "title": "添加当前编辑器文本内容"
+      },
+      {
+        "command": "speed-up.refreshHooks",
+        "title": "refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "speed-up.refreshUtils",
+        "title": "refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "speed-up.element-plus",
+        "title": "active element-plus termine"
+      },
+      {
+        "command": "speed-up.insert-element-plus",
+        "title": "插入element-plus组件模板"
       }
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "speed-up.insert-element-plus",
+          "when": "editorTextFocus && editorLangId == 'vue'",
+          "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "speed-up.refreshHooks",
+          "when": "view == hooks ",
+          "group": "navigation"
+        },
+        {
+          "command": "speed-up.refreshUtils",
+          "when": "view == utils ",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "speed-up.importUtil",
+          "when": "view == utils && viewItem == utilsImport",
+          "group": "inline"
+        },
+        {
+          "command": "speed-up.importHook",
+          "when": "view == hooks && viewItem == hooksImport",
+          "group": "inline"
+        },
+        {
+          "command": "speed-up.importHookPart",
+          "when": "view == hooks && viewItem == hooksImport",
+          "group": "inline"
+        }
+      ]
+    },
     "views": {
       "explorer": [
         {
           "id": "hooks",
           "name": "hooks"
+        },
+        {
+          "id": "utils",
+          "name": "utils"
         }
       ]
     },
@@ -39,6 +128,16 @@
             "type": "string",
             "default": "@/hooks",
             "description": "hooks路径别名"
+          },
+          "speedImport.utilsPath": {
+            "type": "string",
+            "default": "src/utils",
+            "description": "工具函数路径"
+          },
+          "speedImport.utilsAliasPath": {
+            "type": "string",
+            "default": "@/utils",
+            "description": "工具函数路径别名"
           }
         }
       }
@@ -58,7 +157,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.7",
     "@types/node": "^20.16.9",
-    "@types/vscode": "^1.93.0",
+    "@types/vscode": "^1.54.0",
     "@typescript-eslint/eslint-plugin": "^8.3.0",
     "@typescript-eslint/parser": "^8.3.0",
     "@vscode/test-cli": "^0.0.10",
@@ -68,11 +167,9 @@
     "typescript": "^5.5.4",
     "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4"
-<<<<<<< HEAD
-=======
   },
   "dependencies": {
-    "exportinfo": "^1.0.7"
->>>>>>> 43187434ff2f5db1bd3a7ed25c99ff022290f229
+    "exportinfo": "^1.1.1",
+    "zustand": "^5.0.2"
   }
 }

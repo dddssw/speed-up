@@ -4,33 +4,32 @@ import * as fs from "fs/promises";
 import { getExportInfo } from "exportinfo";
 export default class hookTreeProvide implements vscode.TreeDataProvider<number> {
   private editor: vscode.TextEditor | undefined;
-  private hooksPath: string | undefined;
+  private utilsPath: string | undefined;
   private _onDidChangeTreeData: vscode.EventEmitter<number | undefined> =
     new vscode.EventEmitter<number | undefined>();
   readonly onDidChangeTreeData: vscode.Event<number | undefined> =
     this._onDidChangeTreeData.event;
 
-  refresh(): void {
-    this._onDidChangeTreeData.fire(); //通知订阅更新
-  }
   rootPath =
     vscode.workspace.workspaceFolders &&
     vscode.workspace.workspaceFolders.length > 0
       ? vscode.workspace.workspaceFolders[0].uri.fsPath
       : undefined;
   private context: vscode.ExtensionContext;
-
+  refresh(): void {
+    this._onDidChangeTreeData.fire(); //通知订阅更新
+  }
   constructor(context: vscode.ExtensionContext) {
-      vscode.commands.registerCommand("speed-up.refreshHooks", () =>
-        this.refresh()
-      );
+    vscode.commands.registerCommand("speed-up.refreshUtils", () =>
+      this.refresh()
+    );
 
     this.editor = vscode.window.activeTextEditor;
-    const hooksConfigurePath = vscode.workspace
+    const utilsConfigurePath = vscode.workspace
       .getConfiguration("speedImport")
-      .get("hooksPath");
-    this.hooksPath = path.join(this.rootPath, hooksConfigurePath);
-    const view = vscode.window.createTreeView("hooks", {
+      .get("utilsPath");
+    this.utilsPath = path.join(this.rootPath, utilsConfigurePath);
+    const view = vscode.window.createTreeView("utils", {
       treeDataProvider: this,
       showCollapseAll: true,
       canSelectMany: true,
@@ -49,7 +48,7 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
     }
     //根
     if (!element) {
-      const fileArr = await getFilesAndExtensions(this.hooksPath);
+      const fileArr = await getFilesAndExtensions(this.utilsPath);
       fileArr.forEach((item) => {
         item.collapsibleState = 1;
         item.iconPath =
@@ -72,11 +71,13 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
               : vscode.ThemeIcon.File;
         });
         return fileArr;
-      }
-      //文件导出的函数
-      else if (element.returnData && element.returnData.length > 0) {
-        element.returnData.forEach((item) => {
-          item.label = item.returnName;
+      } else {
+        const code = await fs.readFile(element.fullPath, "utf-8");
+        const exportInfo = getExportInfo(code, element.label);
+        console.log(exportInfo, "exportInfo");
+        exportInfo.forEach((item) => {
+          item.fullPath = element.fullPath;
+          item.label = item.name;
           item.tooltip = item.comment;
           item.collapsibleState = 0;
           item.iconPath = new vscode.ThemeIcon(
@@ -87,30 +88,7 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
             title: "Open File",
             arguments: [vscode.Uri.file(element.fullPath), item.loc],
           };
-        });
-        return element.returnData;
-      } else {
-        const code = await fs.readFile(element.fullPath, "utf-8");
-        const exportInfo = getExportInfo(code, element.label);
-        console.log(exportInfo, "exportInfo");
-        exportInfo.forEach((item) => {
-          item.fullPath = element.fullPath;
-          item.label = item.name;
-          item.tooltip = item.comment;
-          item.collapsibleState = !item.returnData
-            ? 0
-            : item.returnData?.length === 0
-            ? 0
-            : 1;
-          item.iconPath = new vscode.ThemeIcon(
-            item.type.includes("Function") ? "symbol-function" : "symbol-field"
-          );
-          item.command = {
-            command: "speed-up.openFileAndScroll",
-            title: "Open File",
-            arguments: [vscode.Uri.file(element.fullPath), item.loc],
-          };
-          item.contextValue = "hooksImport";
+          item.contextValue = "utilsImport";
         });
         return exportInfo;
       }
