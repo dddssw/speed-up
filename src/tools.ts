@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 // 正则表达式匹配默认导出
 const defaultImportRegex =
   /import\s+([a-zA-Z_$][0-9a-zA-Z_$]*)\s+from\s+['"]([^'"]+)['"]/g;
@@ -68,5 +69,28 @@ export function findLastImportLine(code: string): number {
   return lastImportLineNumber; // 返回最后一个 import 语句的行号
 }
 
+  export function convertToLocalPaths(
+    html: string,
+    webview: vscode.Webview,
+    extensionUri:any
+  ) {
+    // 使用正则表达式来匹配 href 和 src 中的路径
+    const pathRegex = /(href|src)=[\'\"]([^\'\"]+)[\'\"]/g;
 
+    // 替换逻辑
+    const updatedHtml = html.replace(pathRegex, (match, p1, p2) => {
+      // 如果路径是以 '/' 开头的，表示是绝对路径
+      if (p2.startsWith("/")) {
+        // 拼接 basePath 和相对路径
+        const newPath = webview.asWebviewUri(
+          vscode.Uri.joinPath(extensionUri, "webView/dist", p2)
+        );
+        return `${p1}="${newPath}"`;
+      }
+      // 如果路径不是以 '/' 开头，保持原样
+      return match;
+    });
+
+    return updatedHtml;
+  }
 

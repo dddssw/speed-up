@@ -6,7 +6,9 @@ import hookTreeProvide from "./hookTree";
 import utilTreeProvide from "./utilTree";
 import { createTerminal } from "@/utils/terminal";
 import { insertResponseDataPosition } from "@/utils/insertPosition";
+import  webViewProvider from '@/web/sideBarView';
 import store from '@/store/elementTemplateInfo';
+import contextStore from "@/store/context";
 import {
   isExistDefault,
   isExistName,
@@ -15,7 +17,7 @@ import {
 } from "./tools.ts";
 const { getState } = store;
 export function activate(context: vscode.ExtensionContext) {
-
+contextStore.getState().save(context);
   vscode.window.onDidEndTerminalShellExecution(async (event) => {
     // event 变量包含终端执行完成时的详细信息
     const terminal = event.terminal;
@@ -383,6 +385,8 @@ export function activate(context: vscode.ExtensionContext) {
   }
   new hookTreeProvide(context);
   new utilTreeProvide(context);
+  //new webViewProvider(context,'hooks');
+   import('./web/panelView.ts');
 }
 
 export function deactivate() {}

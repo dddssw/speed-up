@@ -57,6 +57,11 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "speed-up.login",
+        "title": "account",
+        "icon": "$(account)"
+      },
+      {
         "command": "speed-up.element-plus",
         "title": "active element-plus termine"
       },
@@ -82,6 +87,11 @@
         {
           "command": "speed-up.refreshUtils",
           "when": "view == utils ",
+          "group": "navigation"
+        },
+        {
+          "command": "speed-up.login",
+          "when": "view == utils || view == hooks",
           "group": "navigation"
         }
       ],
@@ -170,6 +180,7 @@
   },
   "dependencies": {
     "exportinfo": "^1.1.1",
+    "html-modifier": "^1.2.0",
     "zustand": "^5.0.2"
   }
 }

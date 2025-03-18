@@ -1,4 +1,4 @@
-import { createStore } from 'zustand/vanilla';
+import { createStore } from "zustand/vanilla";
 interface templateState {
   "element-plus-template": any;
   save: (template: any) => void;
@@ -10,6 +10,5 @@ const store = createStore<templateState>((set) => ({
     set(() => ({ "element-plus-template": newTemplate })),
   clear: () => set(() => ({ "element-plus-template": {} })),
 }));
-
 
 export default store;
