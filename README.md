@@ -3,7 +3,8 @@
 https://github.com/user-attachments/assets/6f8596ae-b99a-4f41-a2ef-0c5c58af413f
 
  🚀 已完成的功能
-- ✅ 侧边栏展示 hooks 和 utils
+- ✅ 侧边栏展示 hooks 和 utils,支持解析js/ts
+- ✅ 默认解析src下hooks/utils文件夹,可通过setting修改解析路径
 - ✅ 点击文件，跳转到对应页面
 - ✅ 点击导出的内容，自动跳转到对应位置
 - ✅ 点击按钮自动导入到当前文件
