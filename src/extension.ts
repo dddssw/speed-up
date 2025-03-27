@@ -6,8 +6,8 @@ import hookTreeProvide from "./hookTree";
 import utilTreeProvide from "./utilTree";
 import { createTerminal } from "@/utils/terminal";
 import { insertResponseDataPosition } from "@/utils/insertPosition";
-import  webViewProvider from '@/web/sideBarView';
-import store from '@/store/elementTemplateInfo';
+import webViewProvider from "@/web/sideBarView";
+import store from "@/store/elementTemplateInfo";
 import contextStore from "@/store/context";
 import {
   isExistDefault,
@@ -17,7 +17,7 @@ import {
 } from "./tools.ts";
 const { getState } = store;
 export function activate(context: vscode.ExtensionContext) {
-contextStore.getState().save(context);
+  contextStore.getState().save(context);
   vscode.window.onDidEndTerminalShellExecution(async (event) => {
     // event 变量包含终端执行完成时的详细信息
     const terminal = event.terminal;
@@ -38,7 +38,7 @@ contextStore.getState().save(context);
           fs.unlink(filePath);
           getState().save(parsedData);
           console.log(getState()["element-plus-template"]);
-          terminal.sendText('gen el',false);
+          terminal.sendText("gen el", false);
         } else {
           vscode.window.showInformationMessage(`No workspace folder open.`);
         }
@@ -54,30 +54,32 @@ contextStore.getState().save(context);
       : undefined;
   vscode.commands.registerCommand("speed-up.insert-element-plus", () => {
     const editor = vscode.window.activeTextEditor;
+    console.log(editor, "editor");
     if (!editor) {
       vscode.window.showInformationMessage("No editor is active");
       return;
     }
-    if (editor.document.languageId !== "vue") {
+    if (editor?.document.languageId !== "vue") {
       vscode.window.showInformationMessage("应当是一个.vue文件");
       return;
     }
     const componentInfo = getState()["element-plus-template"];
     const position = editor.selection.active;
     const nextLinePosition = new vscode.Position(position.line + 1, 0);
-    const { template, modelValue, functionValue} = componentInfo;
+    const { template, modelValue, functionValue } = componentInfo;
     const line = insertResponseDataPosition();
     const insertRefOrReactivePosition = new vscode.Position(line + 1, 0);
-    // 插入代码到光标位置
+    //插入代码到光标位置
     editor
       .edit((editBuilder) => {
         // 在当前光标位置插入代码
-        editBuilder.insert(nextLinePosition, template+'\n');
+        editBuilder.insert(nextLinePosition, template + "\n");
         editBuilder.insert(
           insertRefOrReactivePosition,
-          modelValue.join("\n") + functionValue.join('\n') + '\n'
+          modelValue.join("\n") + functionValue.join("\n") + "\n"
         );
-      }).then(()=>{
+      })
+      .then(() => {
         vscode.commands.executeCommand("editor.action.formatDocument");
       });
   });
@@ -97,7 +99,7 @@ contextStore.getState().save(context);
       const elementPlusTerminal = createTerminal("element-plus");
       elementPlusTerminal.shellIntegration;
       elementPlusTerminal.show();
-      elementPlusTerminal.sendText('gen el');
+      elementPlusTerminal.sendText("gen el");
     }
   });
   vscode.commands.registerCommand("speed-up.openFile", (resource) =>
@@ -250,8 +252,25 @@ contextStore.getState().save(context);
       }
     }
   });
+  vscode.commands.registerCommand("speed-up.openMySetting", async () => {
+    vscode.commands.executeCommand(
+      "workbench.action.openSettings",
+      "@extension:speed-up"
+    );
+  });
+  vscode.commands.registerCommand("speed-up.openHookPathSetting", async () => {
+    vscode.commands.executeCommand(
+      "workbench.action.openSettings",
+      "@extension:speed-up.speedImport.hooksPath"
+    );
+  });
+  vscode.commands.registerCommand("speed-up.openUtilPathSetting", async () => {
+    vscode.commands.executeCommand(
+      "workbench.action.openSettings",
+      "@extension:speed-up.speedImport.utilsPath"
+    );
+  });
   vscode.commands.registerCommand("speed-up.importHook", async (res) => {
-    console.log(res, "kkkk");
     if (
       vscode.window.activeTextEditor &&
       vscode.window.activeTextEditor.document.uri.scheme === "file"
@@ -383,10 +402,19 @@ contextStore.getState().save(context);
       text
     );
   }
+   vscode.workspace.onDidChangeConfiguration(async(event) => {
+     if (event.affectsConfiguration("speedImport.hooksPath")) {
+        vscode.commands.executeCommand("speed-up.refreshHooks")
+        
+     }
+     if (event.affectsConfiguration("speedImport.utilsPath")) {
+       vscode.commands.executeCommand("speed-up.refreshUtils");
+     }
+   });
   new hookTreeProvide(context);
   new utilTreeProvide(context);
   //new webViewProvider(context,'hooks');
-   import('./web/panelView.ts');
+  import("./web/panelView.ts");
 }
 
 export function deactivate() {}

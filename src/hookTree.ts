@@ -1,8 +1,11 @@
 import * as vscode from "vscode";
 const path = require("path");
 import * as fs from "fs/promises";
+import { isInside, findCacheNode } from "@/tools";
 import { getExportInfo } from "exportinfo";
-export default class hookTreeProvide implements vscode.TreeDataProvider<number> {
+export default class hookTreeProvide
+  implements vscode.TreeDataProvider<number>
+{
   private editor: vscode.TextEditor | undefined;
   private hooksPath: string | undefined;
   private _onDidChangeTreeData: vscode.EventEmitter<number | undefined> =
@@ -10,7 +13,12 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
   readonly onDidChangeTreeData: vscode.Event<number | undefined> =
     this._onDidChangeTreeData.event;
 
-  refresh(): void {
+  async refresh() {
+    await this.context.workspaceState.update("hooksData", undefined);
+    const hooksConfigurePath = vscode.workspace
+      .getConfiguration("speedImport")
+      .get("hooksPath");
+    this.hooksPath = path.join(this.rootPath, hooksConfigurePath);
     this._onDidChangeTreeData.fire(); //通知订阅更新
   }
   rootPath =
@@ -21,9 +29,10 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
   private context: vscode.ExtensionContext;
 
   constructor(context: vscode.ExtensionContext) {
-      vscode.commands.registerCommand("speed-up.refreshHooks", () =>
-        this.refresh()
-      );
+    vscode.workspace.onDidChangeTextDocument((e) => this.onDocumentChanged(e));
+    vscode.commands.registerCommand("speed-up.refreshHooks", () =>
+      this.refresh()
+    );
 
     this.editor = vscode.window.activeTextEditor;
     const hooksConfigurePath = vscode.workspace
@@ -41,14 +50,25 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
   getTreeItem(element: any): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element;
   }
-  async getChildren(
-    element?: number | undefined
-  ): Promise<vscode.ProviderResult<number[]>> {
+  async getChildren(element?: any): Promise<vscode.ProviderResult<any[]>> {
     if (!this.rootPath) {
       return Promise.resolve([]);
     }
-    //根
+    const cache: any[] | undefined =
+      this.context.workspaceState.get("hooksData");
+    console.log(cache, "cache");
     if (!element) {
+      //根
+      if (cache) {
+        cache.forEach((item) => {
+          item.iconPath =
+            item.type === "dir"
+              ? vscode.ThemeIcon.Folder
+              : vscode.ThemeIcon.File;
+          item.command.arguments[0] = vscode.Uri.file(item.fullPath);
+        });
+        return cache;
+      }
       const fileArr = await getFilesAndExtensions(this.hooksPath);
       fileArr.forEach((item) => {
         item.collapsibleState = 1;
@@ -60,8 +80,18 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
           arguments: [vscode.Uri.file(item.fullPath)],
         };
       });
+      await this.context.workspaceState.update("hooksData", fileArr); //缓存
       return fileArr;
     } else {
+      console.log("cache1", element.children);
+      if (element.children) {
+        element.children.forEach((item: any) => {
+          item.iconPath = new vscode.ThemeIcon(item.iconPath.id);
+          item.command.arguments[0] = vscode.Uri.file(element.fullPath);
+        });
+        return element.children;
+      }
+      //这是目录
       if (element.type === "dir") {
         const fileArr = await getFilesAndExtensions(element.fullPath);
         fileArr.forEach((item) => {
@@ -71,11 +101,13 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
               ? vscode.ThemeIcon.Folder
               : vscode.ThemeIcon.File;
         });
+        element.children = fileArr; //缓存
+        await this.context.workspaceState.update("hooksData", cache);
         return fileArr;
       }
-      //文件导出的函数
+      //hook函数return的内容
       else if (element.returnData && element.returnData.length > 0) {
-        element.returnData.forEach((item) => {
+        element.returnData.forEach((item: any) => {
           item.label = item.returnName;
           item.tooltip = item.comment;
           item.collapsibleState = 0;
@@ -88,12 +120,16 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
             arguments: [vscode.Uri.file(element.fullPath), item.loc],
           };
         });
+        element.children = element.returnData; //缓存
+        await this.context.workspaceState.update("hooksData", cache);
         return element.returnData;
-      } else {
+      }
+      //文件导出的函数
+      else {
         const code = await fs.readFile(element.fullPath, "utf-8");
         const exportInfo = getExportInfo(code, element.label);
         console.log(exportInfo, "exportInfo");
-        exportInfo.forEach((item) => {
+        exportInfo.forEach((item: any) => {
           item.fullPath = element.fullPath;
           item.label = item.name;
           item.tooltip = item.comment;
@@ -112,8 +148,40 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
           };
           item.contextValue = "hooksImport";
         });
+        element.children = exportInfo; //缓存
+        await this.context.workspaceState.update("hooksData", cache);
         return exportInfo;
       }
+    }
+  }
+  private async onDocumentChanged(changeEvent: vscode.TextDocumentChangeEvent) {
+    if (changeEvent.contentChanges.length === 0) {
+      return;
+    }
+    const shouldUpdate = isInside(
+      changeEvent.document.uri.fsPath,
+      this.hooksPath
+    );
+    if (
+      changeEvent.document.uri.toString() ===
+        this.editor?.document.uri.toString() &&
+      shouldUpdate
+    ) {
+      const tree: any[] | undefined =
+        this.context.workspaceState.get("hooksData");
+      if (!tree) {
+        return;
+      }
+      const node = findCacheNode(tree, changeEvent.document.uri.fsPath);
+      //@ts-ignore
+      node.children = undefined;
+
+      node.iconPath = new vscode.ThemeIcon(node.iconPath.id);
+      node.command.arguments[0] = vscode.Uri.file(node.fullPath);
+
+      // await this.context.workspaceState.update("hooksData", tree);
+      this._onDidChangeTreeData.fire(node);
+      console.log("changeEvent", node);
     }
   }
 }

@@ -16,7 +16,12 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       ? vscode.workspace.workspaceFolders[0].uri.fsPath
       : undefined;
   private context: vscode.ExtensionContext;
-  refresh(): void {
+  async refresh() {
+      await this.context.workspaceState.update("utilsData", undefined);
+      const utilsConfigurePath = vscode.workspace
+        .getConfiguration("speedImport")
+        .get("utilsPath");
+      this.utilsPath = path.join(this.rootPath, utilsConfigurePath);
     this._onDidChangeTreeData.fire(); //通知订阅更新
   }
   constructor(context: vscode.ExtensionContext) {
@@ -41,13 +46,26 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
     return element;
   }
   async getChildren(
-    element?: number | undefined
-  ): Promise<vscode.ProviderResult<number[]>> {
+    element?: any
+  ): Promise<vscode.ProviderResult<any[]>> {
     if (!this.rootPath) {
       return Promise.resolve([]);
     }
+       const cache: any[] | undefined =
+         this.context.workspaceState.get("utilsData");
+       console.log(cache, "cache");
     //根
     if (!element) {
+      if (cache) {
+        cache.forEach((item) => {
+          item.iconPath =
+            item.type === "dir"
+              ? vscode.ThemeIcon.Folder
+              : vscode.ThemeIcon.File;
+          item.command.arguments[0] = vscode.Uri.file(item.fullPath);
+        });
+        return cache;
+      }
       const fileArr = await getFilesAndExtensions(this.utilsPath);
       fileArr.forEach((item) => {
         item.collapsibleState = 1;
@@ -59,8 +77,17 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
           arguments: [vscode.Uri.file(item.fullPath)],
         };
       });
+      await this.context.workspaceState.update("utilsData", fileArr); //缓存
       return fileArr;
     } else {
+            console.log("cache1", element.children);
+            if (element.children) {
+              element.children.forEach((item: any) => {
+                item.iconPath = new vscode.ThemeIcon(item.iconPath.id);
+                item.command.arguments[0] = vscode.Uri.file(element.fullPath);
+              });
+              return element.children;
+            }
       if (element.type === "dir") {
         const fileArr = await getFilesAndExtensions(element.fullPath);
         fileArr.forEach((item) => {
@@ -70,12 +97,14 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
               ? vscode.ThemeIcon.Folder
               : vscode.ThemeIcon.File;
         });
+            element.children = fileArr; //缓存
+           await this.context.workspaceState.update("utilsData", cache);
         return fileArr;
       } else {
         const code = await fs.readFile(element.fullPath, "utf-8");
         const exportInfo = getExportInfo(code, element.label);
         console.log(exportInfo, "exportInfo");
-        exportInfo.forEach((item) => {
+        exportInfo.forEach((item:any) => {
           item.fullPath = element.fullPath;
           item.label = item.name;
           item.tooltip = item.comment;
@@ -90,6 +119,8 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
           };
           item.contextValue = "utilsImport";
         });
+            element.children = exportInfo; //缓存
+           await this.context.workspaceState.update("utilsData", cache);
         return exportInfo;
       }
     }

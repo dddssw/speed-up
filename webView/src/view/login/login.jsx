@@ -1,19 +1,69 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import "./login.css";
+import vscode from "@/message/index";
+import axios from "@/request/axios";
 import { useNavigate } from "react-router-dom";
+import Toast from "@/component/Toast";
+import { TokenContext } from "@/context";
+
 export default function Login() {
+   const {setToken} = useContext(TokenContext);
+  // 监听从 VSCode 插件发送的消息
   const navigate = useNavigate();
   const [type, setType] = useState(1);
-    const [account, setAccount] = useState("");
-    const [password, setPassword] = useState("");
-    const handleAccountChange = (e) => setAccount(e.target.value);
-    const handlePasswordChange = (e) => setPassword(e.target.value);
-  const handleSubmit = () => {
-    navigate("/content");
+  const [account, setAccount] = useState("");
+  const [password, setPassword] = useState("");
+  const handleAccountChange = (e) => setAccount(e.target.value);
+  const handlePasswordChange = (e) => setPassword(e.target.value);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (text) => {
+    setToastMessage(text);
+  };
+
+  const hideToast = () => {
+    setToastMessage(null);
+  };
+  const handleSubmit = async () => {
+    //登录
+    if (type === 1) {
+      const {
+        data: { code, message, token },
+      } = await axios.post("login", { account, password });
+      if (code === 0) {
+        vscode.postMessage({
+          command: "setToken",
+          token,
+        });
+        console.log(token, "token1");
+        setToken(token)
+        navigate("/content");
+      } else {
+        showToast(message);
+      }
+    }
+    //注册
+    else {
+       const {
+         data: { code, message, token },
+       } = await axios.post("register", { account, password });
+       if (code === 0) {
+         vscode.postMessage({
+           command: "setToken",
+           token,
+         });
+         console.log(token, "token1");
+         setToken(token);
+         navigate("/content");
+       } else {
+         showToast(message);
+       }
+    }
   };
 
   return (
     <div className="wrapper fadeInDown">
+      {toastMessage && <Toast message={toastMessage} onClose={hideToast} />}
       <div id="formContent">
         <h2
           onClick={() => setType(1)}
@@ -67,7 +117,7 @@ export default function Login() {
             onChange={handlePasswordChange}
           />
           <button className="fadeIn fourth" onClick={handleSubmit}>
-            Log In
+            {type === 1 ? "Sign In" : "Sign Up"}
           </button>
         </div>
 

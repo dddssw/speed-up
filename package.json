@@ -14,6 +14,16 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsWelcome": [
+      {
+        "view": "hooks",
+        "contents": "似乎没有解析出任何内容,你可以尝试修改解析路径\n[Open setting](command:speed-up.openHookPathSetting)\n抱歉,可能在解析时出现bug,你可以\n[Report bug](https://github.com/dddssw/speed-up)"
+      },
+      {
+        "view": "utils",
+        "contents": "似乎没有解析出任何内容,你可以尝试修改解析路径\n[Open setting](command:speed-up.openUtilPathSetting)\n抱歉,可能在解析时出现bug,你可以\n[Report bug](https://github.com/dddssw/speed-up)"
+      }
+    ],
     "commands": [
       {
         "command": "speed-up.openFile",
@@ -58,8 +68,13 @@
       },
       {
         "command": "speed-up.login",
-        "title": "account",
+        "title": "login",
         "icon": "$(account)"
+      },
+      {
+        "command": "speed-up.logout",
+        "title": "logout",
+        "icon": "$(close)"
       },
       {
         "command": "speed-up.element-plus",
@@ -68,6 +83,18 @@
       {
         "command": "speed-up.insert-element-plus",
         "title": "插入element-plus组件模板"
+      },
+      {
+        "command": "speed-up.openMySetting",
+        "title": "open setting"
+      },
+      {
+        "command": "speed-up.openHookPathSetting",
+        "title": "打开解析hooks的路径配置"
+      },
+      {
+        "command": "speed-up.openUtilPathSetting",
+        "title": "打开解析utils的路径配置"
       }
     ],
     "menus": {
@@ -93,6 +120,16 @@
           "command": "speed-up.login",
           "when": "view == utils || view == hooks",
           "group": "navigation"
+        },
+        {
+          "command": "speed-up.logout",
+          "when": "(view == utils || view == hooks) && speed-up.speepUpWebview",
+          "group": "navigation"
+        },
+        {
+          "when": "view == utils || view == hooks",
+          "command": "speed-up.openMySetting",
+          "group": "one"
         }
       ],
       "view/item/context": [
