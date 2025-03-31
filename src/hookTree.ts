@@ -3,9 +3,14 @@ const path = require("path");
 import * as fs from "fs/promises";
 import { isInside, findCacheNode } from "@/tools";
 import { getExportInfo } from "exportinfo";
-export default class hookTreeProvide implements vscode.TreeDataProvider<number> {
+import { resolve } from "path";
+export default class hookTreeProvide
+  implements vscode.TreeDataProvider<number>
+{
   private editor: vscode.TextEditor | undefined;
   private hooksPath: string | undefined;
+  private watcher: vscode.FileSystemWatcher;
+
   private _onDidChangeTreeData: vscode.EventEmitter<number | undefined> =
     new vscode.EventEmitter<number | undefined>();
   readonly onDidChangeTreeData: vscode.Event<number | undefined> =
@@ -27,7 +32,10 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
   private context: vscode.ExtensionContext;
 
   constructor(context: vscode.ExtensionContext) {
-    vscode.workspace.onDidSaveTextDocument((doc) => this.onDocumentChanged(doc));
+    this.context = context;
+    vscode.workspace.onDidSaveTextDocument((doc) =>
+      this.onDocumentChanged(doc)
+    );
     vscode.commands.registerCommand("speed-up.refreshHooks", () =>
       this.refresh()
     );
@@ -37,13 +45,14 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       .getConfiguration("speedImport")
       .get("hooksPath");
     this.hooksPath = path.join(this.rootPath, hooksConfigurePath);
+    this.createFileWatch(this.hooksPath);
+
     const view = vscode.window.createTreeView("hooks", {
       treeDataProvider: this,
       showCollapseAll: true,
       canSelectMany: true,
     });
     context.subscriptions.push(view);
-    this.context = context;
   }
   getTreeItem(element: any): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element;
@@ -85,7 +94,9 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       if (element.children) {
         element.children.forEach((item: any) => {
           item.iconPath = new vscode.ThemeIcon(item.iconPath.id);
-          item.command.arguments[0] = vscode.Uri.file(element.fullPath);
+          if (item.command){
+            item.command.arguments[0] = vscode.Uri.file(element.fullPath);
+          }
         });
         return element.children;
       }
@@ -151,10 +162,7 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
     }
   }
   private async onDocumentChanged(doc: vscode.TextDocument) {
-    const shouldUpdate = isInside(
-      doc.uri.fsPath,
-      this.hooksPath
-    );
+    const shouldUpdate = isInside(doc.uri.fsPath, this.hooksPath);
     if (shouldUpdate) {
       const tree: any[] | undefined =
         this.context.workspaceState.get("hooksData");
@@ -163,11 +171,43 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       }
       const node = findCacheNode(tree, doc.uri.fsPath);
       //@ts-ignore
-       node.children = undefined;
-       //await this.context.workspaceState.update("hooksData", tree);
+      node.children = undefined;
+      //await this.context.workspaceState.update("hooksData", tree);
       this._onDidChangeTreeData.fire(node);
       console.log("changeEvent", node);
     }
+  }
+  private createFileWatch(folderPath: any) {
+    this.watcher?.dispose();
+    const globPath = path.join(folderPath, "**/*");
+    this.watcher = vscode.workspace.createFileSystemWatcher(globPath);
+    // 文件创建事件
+    this.watcher.onDidCreate(async (uri) => {
+    const tree: any[] | undefined =
+      this.context.workspaceState.get("hooksData");
+    if (!tree) {
+      return;
+    }
+    const node = findCacheNode(tree, path.dirname(uri.fsPath));
+    //@ts-ignore
+    node.children = undefined;
+    //await this.context.workspaceState.update("hooksData", tree);
+    this._onDidChangeTreeData.fire(node);
+    });
+
+    // 文件删除事件
+    this.watcher.onDidDelete((uri) => {
+        const tree: any[] | undefined =
+          this.context.workspaceState.get("hooksData");
+        if (!tree) {
+          return;
+        }
+        const node = findCacheNode(tree, path.dirname(uri.fsPath));
+        //@ts-ignore
+        node.children = undefined;
+        //await this.context.workspaceState.update("hooksData", tree);
+        this._onDidChangeTreeData.fire(node);
+    });
   }
 }
 

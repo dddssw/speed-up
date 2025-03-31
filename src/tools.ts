@@ -105,7 +105,7 @@ export function isInside(filePath, targetDir) {
     !relativePath.startsWith("..") && relativePath !== path.resolve(filePath)
   );
 }
-//回溯查找节点
+//回溯查找节点,根据完整路径
 export function findCacheNode(treeData, target) {
   let res;
   dfs(treeData);
