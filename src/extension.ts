@@ -405,14 +405,15 @@ export function activate(context: vscode.ExtensionContext) {
    vscode.workspace.onDidChangeConfiguration(async(event) => {
      if (event.affectsConfiguration("speedImport.hooksPath")) {
         vscode.commands.executeCommand("speed-up.refreshHooks")
-        
+        hookTree.createFileWatch;
      }
      if (event.affectsConfiguration("speedImport.utilsPath")) {
        vscode.commands.executeCommand("speed-up.refreshUtils");
+       utilTree.createFileWatch();
      }
    });
-  new hookTreeProvide(context);
-  new utilTreeProvide(context);
+  const hookTree = new hookTreeProvide(context);
+  const utilTree = new utilTreeProvide(context);
   //new webViewProvider(context,'hooks');
   import("./web/panelView.ts");
 }

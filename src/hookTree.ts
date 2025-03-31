@@ -4,9 +4,7 @@ import * as fs from "fs/promises";
 import { isInside, findCacheNode } from "@/tools";
 import { getExportInfo } from "exportinfo";
 import { resolve } from "path";
-export default class hookTreeProvide
-  implements vscode.TreeDataProvider<number>
-{
+export default class hookTreeProvide implements vscode.TreeDataProvider<number> {
   private editor: vscode.TextEditor | undefined;
   private hooksPath: string | undefined;
   private watcher: vscode.FileSystemWatcher;
@@ -94,7 +92,7 @@ export default class hookTreeProvide
       if (element.children) {
         element.children.forEach((item: any) => {
           item.iconPath = new vscode.ThemeIcon(item.iconPath.id);
-          if (item.command){
+          if (item.command) {
             item.command.arguments[0] = vscode.Uri.file(element.fullPath);
           }
         });
@@ -161,6 +159,20 @@ export default class hookTreeProvide
       }
     }
   }
+  private dealFile(uri: vscode.Uri) {
+    const tree: any[] | undefined =
+      this.context.workspaceState.get("utilsData");
+    if (!tree) {
+      return;
+    }
+    const node = findCacheNode(tree, path.dirname(uri.fsPath));
+    if (node) {
+      //@ts-ignore
+      node.children = undefined;
+    }
+    node ? this._onDidChangeTreeData.fire(node) : this.refresh();
+    //await this.context.workspaceState.update("utilsData", tree);
+  }
   private async onDocumentChanged(doc: vscode.TextDocument) {
     const shouldUpdate = isInside(doc.uri.fsPath, this.hooksPath);
     if (shouldUpdate) {
@@ -177,36 +189,23 @@ export default class hookTreeProvide
       console.log("changeEvent", node);
     }
   }
-  private createFileWatch(folderPath: any) {
+  public createFileWatch(folderPath: any) {
     this.watcher?.dispose();
     const globPath = path.join(folderPath, "**/*");
-    this.watcher = vscode.workspace.createFileSystemWatcher(globPath);
+    this.watcher = vscode.workspace.createFileSystemWatcher(
+      globPath,
+      false,
+      true,
+      false
+    );
     // 文件创建事件
     this.watcher.onDidCreate(async (uri) => {
-    const tree: any[] | undefined =
-      this.context.workspaceState.get("hooksData");
-    if (!tree) {
-      return;
-    }
-    const node = findCacheNode(tree, path.dirname(uri.fsPath));
-    //@ts-ignore
-    node.children = undefined;
-    //await this.context.workspaceState.update("hooksData", tree);
-    this._onDidChangeTreeData.fire(node);
+      this.dealFile(uri);
     });
 
     // 文件删除事件
     this.watcher.onDidDelete((uri) => {
-        const tree: any[] | undefined =
-          this.context.workspaceState.get("hooksData");
-        if (!tree) {
-          return;
-        }
-        const node = findCacheNode(tree, path.dirname(uri.fsPath));
-        //@ts-ignore
-        node.children = undefined;
-        //await this.context.workspaceState.update("hooksData", tree);
-        this._onDidChangeTreeData.fire(node);
+      this.dealFile(uri);
     });
   }
 }

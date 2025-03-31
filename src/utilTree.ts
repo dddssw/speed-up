@@ -3,9 +3,10 @@ const path = require("path");
 import * as fs from "fs/promises";
 import { isInside, findCacheNode } from "@/tools";
 import { getExportInfo } from "exportinfo";
-export default class hookTreeProvide implements vscode.TreeDataProvider<number> {
+export default class utilTreeProvide implements vscode.TreeDataProvider<number> {
   private editor: vscode.TextEditor | undefined;
   private utilsPath: string | undefined;
+  private watcher: vscode.FileSystemWatcher;
   private _onDidChangeTreeData: vscode.EventEmitter<number | undefined> =
     new vscode.EventEmitter<number | undefined>();
   readonly onDidChangeTreeData: vscode.Event<number | undefined> =
@@ -33,18 +34,19 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       this.refresh()
     );
 
+    this.context = context;
     this.editor = vscode.window.activeTextEditor;
     const utilsConfigurePath = vscode.workspace
       .getConfiguration("speedImport")
       .get("utilsPath");
     this.utilsPath = path.join(this.rootPath, utilsConfigurePath);
+    this.createFileWatch(this.utilsPath);
     const view = vscode.window.createTreeView("utils", {
       treeDataProvider: this,
       showCollapseAll: true,
       canSelectMany: true,
     });
     context.subscriptions.push(view);
-    this.context = context;
   }
   getTreeItem(element: any): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element;
@@ -142,10 +144,44 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       // node.iconPath = new vscode.ThemeIcon(node.iconPath.id);
       // node.command.arguments[0] = vscode.Uri.file(node.fullPath);
 
-      await this.context.workspaceState.update("hooksData", tree);
+      await this.context.workspaceState.update("utilsData", tree);
       this._onDidChangeTreeData.fire(node);
       console.log("changeEvent", node);
     }
+  }
+  //监听文件管理器更新对应树视图
+  private dealFile(uri: vscode.Uri) {
+    const tree: any[] | undefined =
+      this.context.workspaceState.get("utilsData");
+    if (!tree) {
+      return;
+    }
+    const node = findCacheNode(tree, path.dirname(uri.fsPath));
+    if (node) {
+      //@ts-ignore
+      node.children = undefined;
+    }
+    node ? this._onDidChangeTreeData.fire(node) : this.refresh();
+    //await this.context.workspaceState.update("utilsData", tree);
+  }
+  public createFileWatch(folderPath: any) {
+    this.watcher?.dispose();
+    const globPath = new vscode.RelativePattern(folderPath, "**/*");
+    this.watcher = vscode.workspace.createFileSystemWatcher(
+      globPath,
+      false,
+      true,
+      false
+    );
+    // 文件创建事件
+    this.watcher.onDidCreate(async (uri: vscode.Uri) => {
+      this.dealFile(uri);
+    });
+
+    // 文件删除事件
+    this.watcher.onDidDelete((uri) => {
+      this.dealFile(uri);
+    });
   }
 }
 
