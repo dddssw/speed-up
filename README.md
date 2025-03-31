@@ -17,9 +17,9 @@ https://github.com/user-attachments/assets/6f8596ae-b99a-4f41-a2ef-0c5c58af413f
 
 #### 🚀 正在进行的任务
 - 📦 **~~文件修改~~ 文件保存时按需刷新树节点需要考虑影响之前的缓存功能**(难/阻塞)
+- 📦 **监听对应hooks，utils文件管理器变化，实时按需更新树视图**
 复杂问题梳理, 缓存+持久化+按需刷新节点
 
-通过回溯拿到对应持久化树节点,而不是通过element,可能这两者并不是一个引用
 - 缓存的实现
   
   * 解析大致流程:如果element为空代表构造根节点,否则如果element.type为目录,则解析目录之下的文件列表,返回文件列表.如果element.returnData为真,直接返回element.returnData.其他都是进行文件解析,对于hook,returnData已经保存在exportinfo里,返回exportinfo
