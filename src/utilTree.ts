@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 const path = require("path");
 import * as fs from "fs/promises";
+import { isInside, findCacheNode } from "@/tools";
 import { getExportInfo } from "exportinfo";
 export default class hookTreeProvide implements vscode.TreeDataProvider<number> {
   private editor: vscode.TextEditor | undefined;
@@ -17,14 +18,17 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       : undefined;
   private context: vscode.ExtensionContext;
   async refresh() {
-      await this.context.workspaceState.update("utilsData", undefined);
-      const utilsConfigurePath = vscode.workspace
-        .getConfiguration("speedImport")
-        .get("utilsPath");
-      this.utilsPath = path.join(this.rootPath, utilsConfigurePath);
+    await this.context.workspaceState.update("utilsData", undefined);
+    const utilsConfigurePath = vscode.workspace
+      .getConfiguration("speedImport")
+      .get("utilsPath");
+    this.utilsPath = path.join(this.rootPath, utilsConfigurePath);
     this._onDidChangeTreeData.fire(); //通知订阅更新
   }
   constructor(context: vscode.ExtensionContext) {
+    vscode.workspace.onDidSaveTextDocument((doc) =>
+      this.onDocumentChanged(doc)
+    );
     vscode.commands.registerCommand("speed-up.refreshUtils", () =>
       this.refresh()
     );
@@ -45,15 +49,13 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
   getTreeItem(element: any): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element;
   }
-  async getChildren(
-    element?: any
-  ): Promise<vscode.ProviderResult<any[]>> {
+  async getChildren(element?: any): Promise<vscode.ProviderResult<any[]>> {
     if (!this.rootPath) {
       return Promise.resolve([]);
     }
-       const cache: any[] | undefined =
-         this.context.workspaceState.get("utilsData");
-       console.log(cache, "cache");
+    const cache: any[] | undefined =
+      this.context.workspaceState.get("utilsData");
+    console.log(cache, "cache");
     //根
     if (!element) {
       if (cache) {
@@ -80,14 +82,14 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       await this.context.workspaceState.update("utilsData", fileArr); //缓存
       return fileArr;
     } else {
-            console.log("cache1", element.children);
-            if (element.children) {
-              element.children.forEach((item: any) => {
-                item.iconPath = new vscode.ThemeIcon(item.iconPath.id);
-                item.command.arguments[0] = vscode.Uri.file(element.fullPath);
-              });
-              return element.children;
-            }
+      console.log("cache1", element.children);
+      if (element.children) {
+        element.children.forEach((item: any) => {
+          item.iconPath = new vscode.ThemeIcon(item.iconPath.id);
+          item.command.arguments[0] = vscode.Uri.file(element.fullPath);
+        });
+        return element.children;
+      }
       if (element.type === "dir") {
         const fileArr = await getFilesAndExtensions(element.fullPath);
         fileArr.forEach((item) => {
@@ -97,14 +99,14 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
               ? vscode.ThemeIcon.Folder
               : vscode.ThemeIcon.File;
         });
-            element.children = fileArr; //缓存
-           await this.context.workspaceState.update("utilsData", cache);
+        element.children = fileArr; //缓存
+        await this.context.workspaceState.update("utilsData", cache);
         return fileArr;
       } else {
         const code = await fs.readFile(element.fullPath, "utf-8");
         const exportInfo = getExportInfo(code, element.label);
         console.log(exportInfo, "exportInfo");
-        exportInfo.forEach((item:any) => {
+        exportInfo.forEach((item: any) => {
           item.fullPath = element.fullPath;
           item.label = item.name;
           item.tooltip = item.comment;
@@ -119,10 +121,30 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
           };
           item.contextValue = "utilsImport";
         });
-            element.children = exportInfo; //缓存
-           await this.context.workspaceState.update("utilsData", cache);
+        element.children = exportInfo; //缓存
+        await this.context.workspaceState.update("utilsData", cache);
         return exportInfo;
       }
+    }
+  }
+  private async onDocumentChanged(doc: vscode.TextDocument) {
+    const shouldUpdate = isInside(doc.uri.fsPath, this.utilsPath);
+    if (shouldUpdate) {
+      const tree: any[] | undefined =
+        this.context.workspaceState.get("utilsData");
+      if (!tree) {
+        return;
+      }
+      const node = findCacheNode(tree, doc.uri.fsPath);
+      //@ts-ignore
+      node.children = undefined;
+
+      // node.iconPath = new vscode.ThemeIcon(node.iconPath.id);
+      // node.command.arguments[0] = vscode.Uri.file(node.fullPath);
+
+      await this.context.workspaceState.update("hooksData", tree);
+      this._onDidChangeTreeData.fire(node);
+      console.log("changeEvent", node);
     }
   }
 }

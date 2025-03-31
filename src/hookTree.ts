@@ -3,9 +3,7 @@ const path = require("path");
 import * as fs from "fs/promises";
 import { isInside, findCacheNode } from "@/tools";
 import { getExportInfo } from "exportinfo";
-export default class hookTreeProvide
-  implements vscode.TreeDataProvider<number>
-{
+export default class hookTreeProvide implements vscode.TreeDataProvider<number> {
   private editor: vscode.TextEditor | undefined;
   private hooksPath: string | undefined;
   private _onDidChangeTreeData: vscode.EventEmitter<number | undefined> =
@@ -29,7 +27,7 @@ export default class hookTreeProvide
   private context: vscode.ExtensionContext;
 
   constructor(context: vscode.ExtensionContext) {
-    vscode.workspace.onDidChangeTextDocument((e) => this.onDocumentChanged(e));
+    vscode.workspace.onDidSaveTextDocument((doc) => this.onDocumentChanged(doc));
     vscode.commands.registerCommand("speed-up.refreshHooks", () =>
       this.refresh()
     );
@@ -120,8 +118,6 @@ export default class hookTreeProvide
             arguments: [vscode.Uri.file(element.fullPath), item.loc],
           };
         });
-        element.children = element.returnData; //缓存
-        await this.context.workspaceState.update("hooksData", cache);
         return element.returnData;
       }
       //文件导出的函数
@@ -154,32 +150,21 @@ export default class hookTreeProvide
       }
     }
   }
-  private async onDocumentChanged(changeEvent: vscode.TextDocumentChangeEvent) {
-    if (changeEvent.contentChanges.length === 0) {
-      return;
-    }
+  private async onDocumentChanged(doc: vscode.TextDocument) {
     const shouldUpdate = isInside(
-      changeEvent.document.uri.fsPath,
+      doc.uri.fsPath,
       this.hooksPath
     );
-    if (
-      changeEvent.document.uri.toString() ===
-        this.editor?.document.uri.toString() &&
-      shouldUpdate
-    ) {
+    if (shouldUpdate) {
       const tree: any[] | undefined =
         this.context.workspaceState.get("hooksData");
       if (!tree) {
         return;
       }
-      const node = findCacheNode(tree, changeEvent.document.uri.fsPath);
+      const node = findCacheNode(tree, doc.uri.fsPath);
       //@ts-ignore
-      node.children = undefined;
-
-      node.iconPath = new vscode.ThemeIcon(node.iconPath.id);
-      node.command.arguments[0] = vscode.Uri.file(node.fullPath);
-
-      // await this.context.workspaceState.update("hooksData", tree);
+       node.children = undefined;
+       //await this.context.workspaceState.update("hooksData", tree);
       this._onDidChangeTreeData.fire(node);
       console.log("changeEvent", node);
     }
