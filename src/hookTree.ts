@@ -161,7 +161,7 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
   }
   private dealFile(uri: vscode.Uri) {
     const tree: any[] | undefined =
-      this.context.workspaceState.get("utilsData");
+      this.context.workspaceState.get("hooksData");
     if (!tree) {
       return;
     }
@@ -171,7 +171,7 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       node.children = undefined;
     }
     node ? this._onDidChangeTreeData.fire(node) : this.refresh();
-    //await this.context.workspaceState.update("utilsData", tree);
+    //await this.context.workspaceState.update("hooksData", tree);
   }
   private async onDocumentChanged(doc: vscode.TextDocument) {
     const shouldUpdate = isInside(doc.uri.fsPath, this.hooksPath);
@@ -191,7 +191,7 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
   }
   public createFileWatch(folderPath: any) {
     this.watcher?.dispose();
-    const globPath = path.join(folderPath, "**/*");
+     const globPath = new vscode.RelativePattern(folderPath, "**/*");
     this.watcher = vscode.workspace.createFileSystemWatcher(
       globPath,
       false,
