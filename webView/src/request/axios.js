@@ -2,7 +2,7 @@ import axios from "axios";
 import data from '@/data/token'
 // 创建 axios 实例
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: "http://47.103.24.76:3000",
   timeout: 5000, // 可选的超时设置
 });
 
