@@ -32,10 +32,10 @@ https://github.com/user-attachments/assets/6f8596ae-b99a-4f41-a2ef-0c5c58af413f
   - 🕷️ 新增文件在treeview上官方没有给出暴露的接口
 #### 🚀 新增功能计划
 
+- 📦 拖放功能
 - 📦 实现频率统计：显示每个hook或utils在项目中的使用频率
 - 📦 文件/文件夹添加注释
 - 📦 webview里的内容直接导入项目文件
-- 📦 拖放功能
 
 #### 🐛 Bug 修复
 - 🕷️ 请先打开任意一个文件,否则解析报错 ✅
