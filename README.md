@@ -16,15 +16,14 @@ https://github.com/user-attachments/assets/6f8596ae-b99a-4f41-a2ef-0c5c58af413f
 ### 📅 开发计划
 
 #### 🚀 正在进行的任务
-- 📦 **~~文件修改~~ 文件保存时按需刷新树节点需要考虑影响之前的缓存功能**(难/阻塞)
-- 📦 **监听对应hooks，utils文件管理器变化，实时按需更新树视图**
-复杂问题梳理, 缓存+持久化+按需刷新节点
-
-- 缓存的实现
+- 📦 **hook导出内容可选**
   
-  * 解析大致流程:如果element为空代表构造根节点,否则如果element.type为目录,则解析目录之下的文件列表,返回文件列表.如果element.returnData为真,直接返回element.returnData.其他都是进行文件解析,对于hook,returnData已经保存在exportinfo里,返回exportinfo
-  * 将第一次解析数据放在children属性下,对于hook return的数据不需要保存,因为已经存放在returnData里
-  * 
+  * 时间：2025/4/1 ~ now
+  * 状态：进行中
+   hook的规范一般都一个文件默认导出一个hook函数，函数会return一些数据供外部使用，当然也可以不需要return任何东西
+
+   如果有return的话，可以勾选哪些需要，然后一键导入就只会导入勾选的内容了
+    
 - 📦 **实现文件操作的功能**
   * 时间：2025/3/26 ~ now
   * 状态：暂时终止
@@ -33,11 +32,11 @@ https://github.com/user-attachments/assets/6f8596ae-b99a-4f41-a2ef-0c5c58af413f
   - 🕷️ 新增文件在treeview上官方没有给出暴露的接口
 #### 🚀 新增功能计划
 
+- 📦 拖放功能
 - 📦 实现频率统计：显示每个hook或utils在项目中的使用频率
 - 📦 文件/文件夹添加注释
 - 📦 webview里的内容直接导入项目文件
-- 📦 拖放功能
-- 📦 hook导出内容可选
+
 #### 🐛 Bug 修复
 - 🕷️ 请先打开任意一个文件,否则解析报错 ✅
 - 🕷️ 暂不支持class的语法,还有一些边缘场景可能未涉及
@@ -48,6 +47,19 @@ https://github.com/user-attachments/assets/6f8596ae-b99a-4f41-a2ef-0c5c58af413f
 - ✨ 优化用户体验
 
 ### 📅 历史开发计划
+- 📦 **~~文件修改~~ 文件保存时按需刷新树节点需要考虑影响之前的缓存功能**(难/阻塞)
+- 📦 **监听对应hooks，utils文件管理器变化，实时按需更新树视图**
+- 
+  * 时间：2025/3/24 ~ 2025/4/1 
+  * 状态：已完成
+vscode bug(https://github.com/microsoft/vscode/issues/245035)
+复杂问题梳理, 缓存+持久化+按需刷新节点
+
+- 缓存的实现
+  
+  * 解析大致流程:如果element为空代表构造根节点,否则如果element.type为目录,则解析目录之下的文件列表,返回文件列表.如果element.returnData为真,直接返回element.returnData.其他都是进行文件解析,对于hook,returnData已经保存在exportinfo里,返回exportinfo
+  * 将第一次解析数据放在children属性下,对于hook return的数据不需要保存,因为已经存放在returnData里
+   
 - 📦 **如果树视图没有任何内容，引导用户进行操作**
   * 时间：2025/3/26 ~ 2025/3/26
   * 状态：已完成
