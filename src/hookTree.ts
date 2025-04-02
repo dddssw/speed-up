@@ -4,7 +4,9 @@ import * as fs from "fs/promises";
 import { isInside, findCacheNode } from "@/tools";
 import { getExportInfo } from "exportinfo";
 import { resolve } from "path";
-export default class hookTreeProvide implements vscode.TreeDataProvider<number> {
+export default class hookTreeProvide
+  implements vscode.TreeDataProvider<number>
+{
   private editor: vscode.TextEditor | undefined;
   private hooksPath: string | undefined;
   private watcher: vscode.FileSystemWatcher;
@@ -50,8 +52,13 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       showCollapseAll: true,
       canSelectMany: true,
     });
+    // view.onDidChangeCheckboxState(
+    //   (event: vscode.TreeCheckboxChangeEvent<any>) => {
+    //   }
+    // );
     context.subscriptions.push(view);
   }
+
   getTreeItem(element: any): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element;
   }
@@ -118,6 +125,7 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
           item.label = item.returnName;
           item.tooltip = item.comment;
           item.collapsibleState = 0;
+          item.checkboxState = 1;
           item.iconPath = new vscode.ThemeIcon(
             item.type.includes("Function") ? "symbol-function" : "symbol-field"
           );
@@ -135,9 +143,13 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
         const exportInfo = getExportInfo(code, element.label);
         console.log(exportInfo, "exportInfo");
         exportInfo.forEach((item: any) => {
+                  if (item?.returnType === "ObjectExpression") {
+                    item.checkboxState = 1;
+                  } 
           item.fullPath = element.fullPath;
           item.label = item.name;
           item.tooltip = item.comment;
+          item.checkboxState = 1;
           item.collapsibleState = !item.returnData
             ? 0
             : item.returnData?.length === 0
@@ -191,7 +203,10 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
   }
   public createFileWatch() {
     this.watcher?.dispose();
-     const globPath = new vscode.RelativePattern((this.hooksPath as string), "**/*");
+    const globPath = new vscode.RelativePattern(
+      this.hooksPath as string,
+      "**/*"
+    );
     this.watcher = vscode.workspace.createFileSystemWatcher(
       globPath,
       false,

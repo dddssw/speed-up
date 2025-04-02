@@ -14,6 +14,7 @@ import {
   isExistName,
   findScriptArea,
   findLastImportLine,
+  findNode,
 } from "./tools.ts";
 const { getState } = store;
 export function activate(context: vscode.ExtensionContext) {
@@ -276,7 +277,7 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.activeTextEditor.document.uri.scheme === "file"
     ) {
       console.log(vscode.window.activeTextEditor.document.languageId);
-      if (vscode.window.activeTextEditor.document.languageId === "vue") {
+      //if (vscode.window.activeTextEditor.document.languageId === "vue") {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
           // 获取当前文档的文本
@@ -324,7 +325,7 @@ export function activate(context: vscode.ExtensionContext) {
               if (importLine === 1) {
                 importLine = lineNumber + 1;
               }
-              const importPosition = new vscode.Position(importLine, 0);
+              const importPosition = new vscode.Position(importLine+1, 0);
               await insertTextInEditor(importPosition, returnText);
             }
           } else {
@@ -362,7 +363,7 @@ export function activate(context: vscode.ExtensionContext) {
                   importLine = lineNumber + 1;
                 }
                 console.log(importLine, "importLine");
-                const importPosition = new vscode.Position(importLine, 0);
+                const importPosition = new vscode.Position(importLine+1, 0);
                 await insertTextInEditor(importPosition, returnText);
               }
             } else {
@@ -383,12 +384,137 @@ export function activate(context: vscode.ExtensionContext) {
               if (importLine === 1) {
                 importLine = lineNumber + 1;
               }
-              const importPosition = new vscode.Position(importLine, 0);
+              const importPosition = new vscode.Position(importLine+1, 0);
               await insertTextInEditor(importPosition, returnText);
             }
           }
         }
+      //}
+    }
+  });
+  vscode.commands.registerCommand("speed-up.importHookPart", async (res) => {
+    if (
+      vscode.window.activeTextEditor &&
+      vscode.window.activeTextEditor.document.uri.scheme === "file"
+    ) {
+      console.log(vscode.window.activeTextEditor.document.languageId);
+      // if (vscode.window.activeTextEditor.document.languageId === "vue") {
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        // 获取当前文档的文本
+        const document = editor.document;
+        const documentText = document.getText();
+        const fileName = path.basename(
+          res.fullPath,
+          path.extname(res.fullPath)
+        );
+        const importName = res.label;
+        const hooksPath: string = vscode.workspace
+          .getConfiguration("speedImport")
+          .get("hooksPath");
+        const hooksAliasPath: string = vscode.workspace
+          .getConfiguration("speedImport")
+          .get("hooksAliasPath");
+        const normalFullPath = path.normalize(res.fullPath).replace(/\\/g, "/");
+
+        const parts = normalFullPath.split(hooksPath);
+        const aliasPathName = hooksAliasPath + parts[1];
+        
+        if (res.isDefault) {
+          const existData = isExistDefault(documentText, fileName);
+          if (existData) {
+            vscode.window.showInformationMessage(
+              `Default Import Already Exist`
+            );
+            return;
+          } else {
+            const text = `import ${importName} from "${aliasPathName}"\n`;
+            const lineNumber = findScriptArea(documentText);
+            const position = new vscode.Position(lineNumber + 1, 0);
+            await insertTextInEditor(position, text);
+            const returnText =
+              res.returnType === "ObjectExpression"
+                ? `const {${res.returnData
+                    .map((item) => {
+                      if (item.checkboxState === 1) {
+                        return item.returnName;
+                      }
+                    })
+                    .filter((item) => item)
+                    .join(",")}} = ${res.name}(${res.params.join(",")})\n`
+                : `const ${res.returnData
+                    .map((item) => item.returnName)
+                    .join(",")} = ${res.name}(${res.params.join(",")})\n`;
+            let importLine = findLastImportLine(documentText) + 2;
+            if (importLine === 1) {
+              importLine = lineNumber + 1;
+            }
+            const importPosition = new vscode.Position(importLine+1, 0);
+            await insertTextInEditor(importPosition, returnText);
+          }
+        } else {
+          const existData = isExistName(documentText, fileName);
+          console.log(existData, "existData");
+          if (existData) {
+            if (existData.match[1].includes(importName)) {
+              vscode.window.showInformationMessage(`Name Import Already Exist`);
+            } else {
+              const lineNumber = findScriptArea(documentText);
+              const text = AddImport(existData.match[0], importName);
+              const line = document.lineAt(existData.lineNumber - 1);
+              const range = new vscode.Range(line.range.start, line.range.end);
+              vscode.commands.executeCommand(
+                "speed-up.replaceEditContent",
+                range,
+                text
+              );
+
+              const returnText =
+                res.returnType === "ObjectExpression"
+                  ? `const {${res.returnData
+                      .map((item) => {
+                        if (item.checkboxState === 1) return item.returnName;
+                      })
+                      .filter((item) => item)
+                      .join(",")}} = ${res.name}(${res.params.join(",")})\n`
+                  : `const ${res.returnData
+                      .map((item) => item.returnName)
+                      .join(",")} = ${res.name}(${res.params.join(",")})\n`;
+              let importLine = findLastImportLine(documentText) + 2;
+              if (importLine === 1) {
+                importLine = lineNumber + 1;
+              }
+              console.log(importLine, "importLine");
+              const importPosition = new vscode.Position(importLine+1, 0);
+              await insertTextInEditor(importPosition, returnText);
+            }
+          } else {
+            const text = `import {${importName}} from "${aliasPathName}"\n`;
+            const lineNumber = findScriptArea(documentText);
+            const position = new vscode.Position(lineNumber + 1, 0);
+            await insertTextInEditor(position, text);
+
+            const returnText =
+              res.returnType === "ObjectExpression"
+                ? `const {${res.returnData
+                    .map((item) => {
+                      if (item.checkboxState === 1) return item.returnName;
+                    })                    .filter((item) => item)
+                    .filter((item) => item)
+                    .join(",")}} = ${res.name}(${res.params.join(",")})\n`
+                : `const ${res.returnData
+                    .map((item) => item.returnName)
+                    .join(",")} = ${res.name}(${res.params.join(",")})\n`;
+            let importLine = findLastImportLine(documentText) + 2;
+            if (importLine === 1) {
+              importLine = lineNumber + 1;
+            }
+            const importPosition = new vscode.Position(importLine+1, 0);
+            await insertTextInEditor(importPosition, returnText);
+          }
+        }
       }
+      //}
     }
   });
   function openResource(resource: vscode.Uri): void {
@@ -402,16 +528,16 @@ export function activate(context: vscode.ExtensionContext) {
       text
     );
   }
-   vscode.workspace.onDidChangeConfiguration(async(event) => {
-     if (event.affectsConfiguration("speedImport.hooksPath")) {
-        await vscode.commands.executeCommand("speed-up.refreshHooks")
-        hookTree.createFileWatch();
-     }
-     if (event.affectsConfiguration("speedImport.utilsPath")) {
-       await vscode.commands.executeCommand("speed-up.refreshUtils");
-       utilTree.createFileWatch();
-     }
-   });
+  vscode.workspace.onDidChangeConfiguration(async (event) => {
+    if (event.affectsConfiguration("speedImport.hooksPath")) {
+      await vscode.commands.executeCommand("speed-up.refreshHooks");
+      hookTree.createFileWatch();
+    }
+    if (event.affectsConfiguration("speedImport.utilsPath")) {
+      await vscode.commands.executeCommand("speed-up.refreshUtils");
+      utilTree.createFileWatch();
+    }
+  });
   const hookTree = new hookTreeProvide(context);
   const utilTree = new utilTreeProvide(context);
   //new webViewProvider(context,'hooks');

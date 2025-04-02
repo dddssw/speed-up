@@ -124,5 +124,24 @@ export function findCacheNode(treeData, target) {
   }
   return res;
 }
+//回溯查找节点,根据node节点本身
+export function findNode(treeData, target) {
+  let res;
+  dfs(treeData);
+  function dfs(nodeArr) {
+    if (res) {
+      return;
+    }
+    for (const item of nodeArr) {
+      if (item.fullPath === target) {
+        res = item;
+      }
+      if (item.children) {
+        dfs(item.children);
+      }
+    }
+  }
+  return res;
+}
 
 
