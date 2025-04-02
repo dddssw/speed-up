@@ -40,7 +40,7 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
       .getConfiguration("speedImport")
       .get("utilsPath");
     this.utilsPath = path.join(this.rootPath, utilsConfigurePath);
-    this.createFileWatch(this.utilsPath);
+    this.createFileWatch();
     const view = vscode.window.createTreeView("utils", {
       treeDataProvider: this,
       showCollapseAll: true,
@@ -164,9 +164,9 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
     node ? this._onDidChangeTreeData.fire(node) : this.refresh();
     //await this.context.workspaceState.update("utilsData", tree);
   }
-  public createFileWatch(folderPath: any) {
-    this.watcher?.dispose();
-    const globPath = new vscode.RelativePattern(folderPath, "**/*");
+  public createFileWatch() {
+    // this.watcher?.dispose();
+    const globPath = new vscode.RelativePattern((this.utilsPath as string), "**/*");
     this.watcher = vscode.workspace.createFileSystemWatcher(
       globPath,
       false,

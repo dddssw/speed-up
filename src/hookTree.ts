@@ -43,7 +43,7 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       .getConfiguration("speedImport")
       .get("hooksPath");
     this.hooksPath = path.join(this.rootPath, hooksConfigurePath);
-    this.createFileWatch(this.hooksPath);
+    this.createFileWatch();
 
     const view = vscode.window.createTreeView("hooks", {
       treeDataProvider: this,
@@ -189,9 +189,9 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       console.log("changeEvent", node);
     }
   }
-  public createFileWatch(folderPath: any) {
+  public createFileWatch() {
     this.watcher?.dispose();
-     const globPath = new vscode.RelativePattern(folderPath, "**/*");
+     const globPath = new vscode.RelativePattern((this.hooksPath as string), "**/*");
     this.watcher = vscode.workspace.createFileSystemWatcher(
       globPath,
       false,
