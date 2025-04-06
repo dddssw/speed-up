@@ -1,9 +1,12 @@
 Hi, 这是一个有趣的小东西, 也是我的第一个技术产品, 或者它还有更广阔的未来🥰
 
-插件市场可以搜到(speed up),  完成下面这个任务会推送新版本
+插件市场可以搜到(speed up),
 
 https://github.com/user-attachments/assets/6f8596ae-b99a-4f41-a2ef-0c5c58af413f
+## 概述
+解析ast获取导出信息是通过单独封装npm包,所以ast所以相关操作函数都是放在这个包里
 
+导出一般是默认导出,具名导出.但是具名导出还有声明与导出不同位置的情况
  🚀 已完成的功能
 - ✅ 侧边栏展示 hooks 和 utils,支持解析js/ts
 - ✅ 基于配置, 默认解析src下hooks/utils文件夹,可通过setting修改解析路径
