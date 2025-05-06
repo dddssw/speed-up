@@ -49,7 +49,8 @@ https://github.com/user-attachments/assets/6f8596ae-b99a-4f41-a2ef-0c5c58af413f
   * 性能分析，为了标准通过使用转成ast，再修改ast转回源代码，这里可能会有性能瓶颈，为了更高效使用swc的tranform直接对源代码修改
     
 - 📦 **学习编写swc,babel插件,学习rust**
-
+  编写了单元测试
+  
   target是js,所以不太适合,但是通过一个灵活的转化可以让他起作用
   
   swc插件([https://github.com/dddssw/exportInfo](https://github.com/dddssw/add-import-plugin))
