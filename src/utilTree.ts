@@ -11,7 +11,8 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
     new vscode.EventEmitter<number | undefined>();
   readonly onDidChangeTreeData: vscode.Event<number | undefined> =
     this._onDidChangeTreeData.event;
-
+  dropMimeTypes = ["application/vnd.code.tree.utils"];
+  dragMimeTypes = ["application/vnd.code.tree.utils"];
   rootPath =
     vscode.workspace.workspaceFolders &&
     vscode.workspace.workspaceFolders.length > 0
@@ -24,7 +25,7 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
       .getConfiguration("speedImport")
       .get("utilsPath");
     this.utilsPath = path.join(this.rootPath, utilsConfigurePath);
-    this._onDidChangeTreeData.fire(); //通知订阅更新
+    this._onDidChangeTreeData.fire(undefined); //通知订阅更新
   }
   constructor(context: vscode.ExtensionContext) {
     vscode.workspace.onDidSaveTextDocument((doc) =>
@@ -43,6 +44,7 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
     this.createFileWatch();
     const view = vscode.window.createTreeView("utils", {
       treeDataProvider: this,
+      dragAndDropController: this,
       showCollapseAll: true,
       canSelectMany: true,
     });
@@ -166,7 +168,10 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
   }
   public createFileWatch() {
     // this.watcher?.dispose();
-    const globPath = new vscode.RelativePattern((this.utilsPath as string), "**/*");
+    const globPath = new vscode.RelativePattern(
+      this.utilsPath as string,
+      "**/*"
+    );
     this.watcher = vscode.workspace.createFileSystemWatcher(
       globPath,
       false,
@@ -182,6 +187,32 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
     this.watcher.onDidDelete((uri) => {
       this.dealFile(uri);
     });
+  }
+  public async handleDrag(
+    source:any,
+    treeDataTransfer: vscode.DataTransfer,
+    token: vscode.CancellationToken
+  ): Promise<void> {
+    if (source[0].type !== 'file' && source[0].type !== 'dir'){
+      treeDataTransfer.set(
+        "application/vnd.code.tree.utils",
+        new vscode.DataTransferItem(source)
+      );
+    }else{
+      vscode.window.showWarningMessage('该类型不支持拖拽!')
+    }
+  }
+  public async handleDrop(
+    target: undefined,
+    sources: vscode.DataTransfer,
+    token: vscode.CancellationToken
+  ): Promise<void> {
+  
+    const transferItem = sources.get("application/vnd.code.tree.utils");
+    console.log(transferItem, "transferItem");
+    if (!transferItem) {
+      return;
+    }
   }
 }
 

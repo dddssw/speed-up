@@ -4,9 +4,7 @@ import * as fs from "fs/promises";
 import { isInside, findCacheNode } from "@/tools";
 import { getExportInfo } from "exportinfo";
 import { resolve } from "path";
-export default class hookTreeProvide
-  implements vscode.TreeDataProvider<number>
-{
+export default class hookTreeProvide implements vscode.TreeDataProvider<number> {
   private editor: vscode.TextEditor | undefined;
   private hooksPath: string | undefined;
   private watcher: vscode.FileSystemWatcher;
@@ -49,6 +47,7 @@ export default class hookTreeProvide
 
     const view = vscode.window.createTreeView("hooks", {
       treeDataProvider: this,
+      dragAndDropController:this,
       showCollapseAll: true,
       canSelectMany: true,
     });
@@ -143,9 +142,9 @@ export default class hookTreeProvide
         const exportInfo = getExportInfo(code, element.label);
         console.log(exportInfo, "exportInfo");
         exportInfo.forEach((item: any) => {
-                  if (item?.returnType === "ObjectExpression") {
-                    item.checkboxState = 1;
-                  } 
+          if (item?.returnType === "ObjectExpression") {
+            item.checkboxState = 1;
+          }
           item.fullPath = element.fullPath;
           item.label = item.name;
           item.tooltip = item.comment;
@@ -171,6 +170,33 @@ export default class hookTreeProvide
       }
     }
   }
+  public async handleDrop(
+    target: undefined,
+    sources: vscode.DataTransfer,
+    token: vscode.CancellationToken
+  ): Promise<void> {
+    const transferItem = sources.get(
+      "application/vnd.code.tree.hooks"
+    );
+    if (!transferItem) {
+      return;
+    }
+  
+  }
+
+  public async handleDrag(
+    source:any,
+    treeDataTransfer: vscode.DataTransfer,
+    token: vscode.CancellationToken
+  ): Promise<void> {
+    if (source[0].type !== 'file' && source[0].type !== 'dir') {
+      treeDataTransfer.set(
+        "application/vnd.code.tree.hooks",
+        new vscode.DataTransferItem(source)
+      );
+    }
+  }
+
   private dealFile(uri: vscode.Uri) {
     const tree: any[] | undefined =
       this.context.workspaceState.get("hooksData");

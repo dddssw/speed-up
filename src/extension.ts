@@ -152,8 +152,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }
   );
-  vscode.commands.registerCommand("speed-up.importUtil", async (res) => {
-    // let isImporting = context.globalState.get(isImportingKey) || false;
+  vscode.commands.registerCommand("speed-up.importUtil", async (res, drogPosition) => {
     if (
       vscode.window.activeTextEditor &&
       vscode.window.activeTextEditor.document.uri.scheme === "file"
@@ -196,17 +195,27 @@ export function activate(context: vscode.ExtensionContext) {
           newCode = newCode.slice(0, -1)
           const edit = new vscode.WorkspaceEdit();
           if (result.length === 0) {
-            if (document.languageId === "vue") {
-              const lineNumber = findLastImportLine(documentText);
-              const position = new vscode.Position(lineNumber, 0);
-              await insertTextInEditor(position, newCode + '\n');
-              startPos = position
-              endPos = new vscode.Position(position.line, position.character + newCode.length)
-            } else {
-              const position = new vscode.Position(0, 0);
-              await insertTextInEditor(position, newCode + '\n');
-              startPos = position
-              endPos = new vscode.Position(position.line, position.character + newCode.length)
+            //处理拖拽
+            if(drogPosition){
+              const isEmpty = isEmptyLine(documentText, drogPosition.line)
+              
+              startPos = new vscode.Position(drogPosition.line + (!isEmpty?1:0), 0)
+              endPos = new vscode.Position(drogPosition.line + (!isEmpty ? 1 : 0), drogPosition.character + newCode.length)
+              await insertTextInEditor(startPos, newCode + (isEmpty?'':'\n'));
+            }else{
+              //非拖拽有两种情况
+              if (document.languageId === "vue") {
+                const lineNumber = findLastImportLine(documentText);
+                const position = new vscode.Position(lineNumber, 0);
+                await insertTextInEditor(position, newCode + '\n');
+                startPos = position
+                endPos = new vscode.Position(position.line, position.character + newCode.length)
+              } else {
+                const position = new vscode.Position(0, 0);
+                await insertTextInEditor(position, newCode + '\n');
+                startPos = position
+                endPos = new vscode.Position(position.line, position.character + newCode.length)
+              }
             }
           } else {
             // 遍历所有匹配项
@@ -275,7 +284,7 @@ export function activate(context: vscode.ExtensionContext) {
       "@extension:speed-up.speedImport.utilsPath"
     );
   });
-  vscode.commands.registerCommand("speed-up.importHook", async (res) => {
+  vscode.commands.registerCommand("speed-up.importHook", async (res, drogPosition) => {
     if (
       vscode.window.activeTextEditor &&
       vscode.window.activeTextEditor.document.uri.scheme === "file"
@@ -315,17 +324,26 @@ export function activate(context: vscode.ExtensionContext) {
         newCode = newCode.slice(0, -1)
         const edit = new vscode.WorkspaceEdit();
         if (result.length === 0) {
-          if (document.languageId === "vue") {
-            const lineNumber = findLastImportLine(documentText);
-            const position = new vscode.Position(lineNumber, 0);
-            await insertTextInEditor(position, newCode + '\n');
-            startPos = position
-            endPos = new vscode.Position(position.line, position.character + newCode.length)
-          } else {
-            const position = new vscode.Position(0, 0);
-            await insertTextInEditor(position, newCode + '\n');
-            startPos = position
-            endPos = new vscode.Position(position.line, position.character + newCode.length)
+          if (drogPosition) {
+            const isEmpty = isEmptyLine(documentText, drogPosition.line)
+            debugger
+
+            startPos = new vscode.Position(drogPosition.line + (!isEmpty ? 1 : 0), 0)
+            endPos = new vscode.Position(drogPosition.line + (!isEmpty ? 1 : 0), drogPosition.character + newCode.length)
+            await insertTextInEditor(startPos, newCode + (isEmpty ? '' : '\n'));
+          }else{
+            if (document.languageId === "vue") {
+              const lineNumber = findLastImportLine(documentText);
+              const position = new vscode.Position(lineNumber, 0);
+              await insertTextInEditor(position, newCode + '\n');
+              startPos = position
+              endPos = new vscode.Position(position.line, position.character + newCode.length)
+            } else {
+              const position = new vscode.Position(0, 0);
+              await insertTextInEditor(position, newCode + '\n');
+              startPos = position
+              endPos = new vscode.Position(position.line, position.character + newCode.length)
+            }
           }
         } else {
           // 遍历所有匹配项
