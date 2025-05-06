@@ -8,8 +8,6 @@ const defaultImportRegex =
 const namedImportRegex = /import\s+{([^}]+)}\s+from\s+['"]([^'"]+)['"]/g;
 export function isExistDefault(code: string, fileName: string) {
   defaultImportRegex.lastIndex = 0;
-  // 匹配默认导出
-  console.log(code, fileName, "code");
   let match;
   while ((match = defaultImportRegex.exec(code)) !== null) {
     // 判断路径是否相同
@@ -143,5 +141,72 @@ export function findNode(treeData, target) {
   }
   return res;
 }
+// export function extractImportsRange(text) {
+//   // 正则表达式：匹配所有 import 语句
+//   const importRegex = /import\s+.*?['"][^'"]+['"];?/g;
 
+//   // 查找所有 import 语句的位置
+//   const importMatches = [...text.matchAll(importRegex)];
+
+//   if (importMatches.length === 0) {
+//     return { content: "", start: -1, end: -1 }; // 如果没有找到任何 import 语句
+//   }
+
+//   // 获取第一个 import 语句的位置和最后一个 import 语句的位置
+//   const start = importMatches[0].index; // 第一个 import 语句的位置
+//   const end =
+//     importMatches[importMatches.length - 1].index +
+//     importMatches[importMatches.length - 1][0].length; // 最后一个 import 语句的位置
+
+//   // 提取从第一个 import 到最后一个 import 语句之间的所有内容
+//   const content = text.slice(start, end);
+
+//   // 返回提取内容和起始结束点
+//   return { content, start, end };
+// }
+// 将字符位置转换为行列位置
+export function lineColumnFromIndex(text, index) {
+  const lines = text.split('\n');
+  let line = 0;
+  let character = index;
+
+  while (line < lines.length) {
+    const lineLength = lines[line].length + 1; // 计算换行符的长度
+    if (character < lineLength) {
+      return { line, character };
+    }
+    character -= lineLength;
+    line++;
+  }
+
+  return { line, character }; // 如果文件非常大，返回最后的位置
+}
+export function getMatchingPositions(text, regex) {
+  const matches = [];
+  let match;
+
+  // 使用正则的 `exec` 方法来匹配所有结果
+  while ((match = regex.exec(text)) !== null) {
+    // 获取匹配项的起始和结束索引
+    const startIndex = match.index;
+    const endIndex = startIndex + match[0].length;
+
+    // 获取起始位置和结束位置的行列信息
+    const startPosition = lineColumnFromIndex(text, startIndex);
+    const endPosition = lineColumnFromIndex(text, endIndex);
+
+    matches.push({
+      match: match[0],
+      startPosition,
+      endPosition,
+    });
+  }
+
+  return matches;
+}
+export function isEmptyLine(documentText,line){
+  const lineContent = documentText.split('\n')[line].trim();
+
+  return lineContent === ''
+}
 
