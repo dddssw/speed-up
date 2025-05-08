@@ -9,6 +9,8 @@ import { insertResponseDataPosition } from "@/utils/insertPosition";
 import webViewProvider from "@/web/sideBarView";
 import store from "@/store/elementTemplateInfo";
 import contextStore from "@/store/context";
+import hooksStore from "@/store/hooksData";
+import utilsStore from "@/store/utilsData";
 import { registerDropEvent } from '@/register'
 import {
   isExistDefault,
@@ -20,7 +22,9 @@ import {
   isEmptyLine
 } from "./tools.ts";
 const { getState } = store;
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+  hooksStore.getState().save(context.workspaceState.get("hooksData"))
+  utilsStore.getState().save(context.workspaceState.get("utilsData"))
   contextStore.getState().save(context);
   vscode.window.onDidEndTerminalShellExecution(async (event) => {
     // event 变量包含终端执行完成时的详细信息

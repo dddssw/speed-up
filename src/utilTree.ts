@@ -3,6 +3,7 @@ const path = require("path");
 import * as fs from "fs/promises";
 import { isInside, findCacheNode } from "@/tools";
 import { getExportInfo } from "exportinfo";
+import store from "@/store/utilsData";
 export default class utilTreeProvide implements vscode.TreeDataProvider<number> {
   private editor: vscode.TextEditor | undefined;
   private utilsPath: string | undefined;
@@ -21,6 +22,7 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
   private context: vscode.ExtensionContext;
   async refresh() {
     await this.context.workspaceState.update("utilsData", undefined);
+    store.getState().save(undefined)
     const utilsConfigurePath = vscode.workspace
       .getConfiguration("speedImport")
       .get("utilsPath");
@@ -58,7 +60,7 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
       return Promise.resolve([]);
     }
     const cache: any[] | undefined =
-      this.context.workspaceState.get("utilsData");
+      store.getState().utilsData;
     console.log(cache, "cache");
     //根
     if (!element) {
@@ -83,10 +85,11 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
           arguments: [vscode.Uri.file(item.fullPath)],
         };
       });
+      store.getState().save(fileArr)
       await this.context.workspaceState.update("utilsData", fileArr); //缓存
       return fileArr;
     } else {
-      console.log("cache1", element.children);
+      console.log(element.children,"cache1");
       if (element.children) {
         element.children.forEach((item: any) => {
           item.iconPath = new vscode.ThemeIcon(item.iconPath.id);
@@ -135,7 +138,7 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
     const shouldUpdate = isInside(doc.uri.fsPath, this.utilsPath);
     if (shouldUpdate) {
       const tree: any[] | undefined =
-        this.context.workspaceState.get("utilsData");
+        store.getState().utilsData;
       if (!tree) {
         return;
       }
@@ -154,7 +157,7 @@ export default class utilTreeProvide implements vscode.TreeDataProvider<number> 
   //监听文件管理器更新对应树视图
   private dealFile(uri: vscode.Uri) {
     const tree: any[] | undefined =
-      this.context.workspaceState.get("utilsData");
+      store.getState().utilsData;
     if (!tree) {
       return;
     }
