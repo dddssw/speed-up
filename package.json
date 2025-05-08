@@ -216,7 +216,7 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "exportinfo": "^1.1.1",
+    "exportinfo": "^1.1.2",
     "html-modifier": "^1.2.0",
     "zustand": "^5.0.2"
   }
