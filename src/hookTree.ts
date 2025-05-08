@@ -4,6 +4,7 @@ import * as fs from "fs/promises";
 import { isInside, findCacheNode } from "@/tools";
 import { getExportInfo } from "exportinfo";
 import { resolve } from "path";
+import store from "@/store/hooksData";
 export default class hookTreeProvide implements vscode.TreeDataProvider<number> {
   private editor: vscode.TextEditor | undefined;
   private hooksPath: string | undefined;
@@ -16,11 +17,12 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
 
   async refresh() {
     await this.context.workspaceState.update("hooksData", undefined);
+    store.getState().save(undefined)
     const hooksConfigurePath = vscode.workspace
       .getConfiguration("speedImport")
       .get("hooksPath");
     this.hooksPath = path.join(this.rootPath, hooksConfigurePath);
-    this._onDidChangeTreeData.fire(); //通知订阅更新
+    this._onDidChangeTreeData.fire(undefined); //通知订阅更新
   }
   rootPath =
     vscode.workspace.workspaceFolders &&
@@ -61,12 +63,13 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
   getTreeItem(element: any): vscode.TreeItem | Thenable<vscode.TreeItem> {
     return element;
   }
+
   async getChildren(element?: any): Promise<vscode.ProviderResult<any[]>> {
     if (!this.rootPath) {
       return Promise.resolve([]);
     }
     const cache: any[] | undefined =
-      this.context.workspaceState.get("hooksData");
+      store.getState().hooksData;
     console.log(cache, "cache");
     if (!element) {
       //根
@@ -91,10 +94,12 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
           arguments: [vscode.Uri.file(item.fullPath)],
         };
       });
+      store.getState().save(fileArr)
       await this.context.workspaceState.update("hooksData", fileArr); //缓存
       return fileArr;
     } else {
-      console.log("cache1", element.children);
+      console.log(element.children,"cache1");
+      //因为returnData已经保存在上一层了，所以这个层级天然带有缓存
       if (element.children) {
         element.children.forEach((item: any) => {
           item.iconPath = new vscode.ThemeIcon(item.iconPath.id);
@@ -118,7 +123,7 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
         await this.context.workspaceState.update("hooksData", cache);
         return fileArr;
       }
-      //hook函数return的内容
+      //hook函数return的内容,util没有这个
       else if (element.returnData && element.returnData.length > 0) {
         element.returnData.forEach((item: any) => {
           item.label = item.returnName;
@@ -198,15 +203,14 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
   }
 
   private dealFile(uri: vscode.Uri) {
-    const tree: any[] | undefined =
-      this.context.workspaceState.get("hooksData");
+    const tree: any[] | undefined = store.getState().hooksData;
     if (!tree) {
       return;
     }
-    const node = findCacheNode(tree, path.dirname(uri.fsPath));
+    const node = findCacheNode(tree, path.dirname(uri.fsPath));//删除一个文件，去他的上一层刷新
     if (node) {
       //@ts-ignore
-      node.children = undefined;
+      node.children = undefined;//为了去除缓存
     }
     node ? this._onDidChangeTreeData.fire(node) : this.refresh();
     //await this.context.workspaceState.update("hooksData", tree);
@@ -215,14 +219,13 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
     const shouldUpdate = isInside(doc.uri.fsPath, this.hooksPath);
     if (shouldUpdate) {
       const tree: any[] | undefined =
-        this.context.workspaceState.get("hooksData");
+        store.getState().hooksData;
       if (!tree) {
         return;
       }
       const node = findCacheNode(tree, doc.uri.fsPath);
       //@ts-ignore
       node.children = undefined;
-      //await this.context.workspaceState.update("hooksData", tree);
       this._onDidChangeTreeData.fire(node);
       console.log("changeEvent", node);
     }
@@ -239,6 +242,7 @@ export default class hookTreeProvide implements vscode.TreeDataProvider<number> 
       true,
       false
     );
+    // 文件重命名其实是先创建然后再删除,所有这里只要监听删除和新增
     // 文件创建事件
     this.watcher.onDidCreate(async (uri) => {
       this.dealFile(uri);
