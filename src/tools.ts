@@ -83,7 +83,7 @@ export function convertToLocalPaths(
     if (p2.startsWith("/")) {
       // 拼接 basePath 和相对路径
       const newPath = webview.asWebviewUri(
-        vscode.Uri.joinPath(extensionUri, "webView/dist", p2)
+        vscode.Uri.joinPath(extensionUri, "webViewDist", p2)
       );
       return `${p1}="${newPath}"`;
     }

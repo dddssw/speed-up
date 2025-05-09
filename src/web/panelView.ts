@@ -57,11 +57,10 @@ vscode.commands.registerCommand("speed-up.logout", () => {
   }
 });
 function getWebviewContent(webview: vscode.Webview) {
-  const indexPath = "webView/dist/index.html";
+  const indexPath = "webViewDist/index.html";
   const htmlPath = join(context.extensionPath, indexPath);
   const htmlText = readFileSync(htmlPath).toString();
-
+  //转化vscode要求的路径
   const res = convertToLocalPaths(htmlText, webview, context.extensionUri);
-  console.log(res, "ssss");
   return res;
 }

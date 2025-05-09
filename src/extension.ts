@@ -6,7 +6,7 @@ import hookTreeProvide from "./hookTree";
 import utilTreeProvide from "./utilTree";
 import { createTerminal } from "@/utils/terminal";
 import { insertResponseDataPosition } from "@/utils/insertPosition";
-import webViewProvider from "@/web/sideBarView";
+// import webViewProvider from "@/web/sideBarView";
 import store from "@/store/elementTemplateInfo";
 import contextStore from "@/store/context";
 import hooksStore from "@/store/hooksData";
