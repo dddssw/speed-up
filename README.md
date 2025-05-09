@@ -2,7 +2,8 @@ Hi, 这是一个有趣的小东西, 并在探索的过程中学到很多🥰
 
 插件市场可以搜到(speed up),
 
-https://github.com/user-attachments/assets/6f8596ae-b99a-4f41-a2ef-0c5c58af413f
+https://github.com/user-attachments/assets/eeecf53c-9e8e-487c-955b-0ce9f6c1dd09
+
 ## 概述
 解析ast获取导出信息是通过单独封装npm包,所以ast所以相关操作函数都是放在这个包里
 
@@ -16,6 +17,7 @@ https://github.com/user-attachments/assets/6f8596ae-b99a-4f41-a2ef-0c5c58af413f
 - ✅ 点击按钮自动导入到当前文件
 - ✅ 悬浮显示注释
 - ✅ 构建在云端共享的hooks, utils，团队层面的共享 (云端)
+- ✅ 监听对应的文件夹,新增,删除文件都能实现实时性更新
 - ✅ 点击按钮能一键导入,实现拖拽能插入到任意的位置
 - ✅ 一些交互优化
 ### 📅 开发计划
