@@ -2,7 +2,7 @@ Hi, 这是一个有趣的小东西, 并在探索的过程中学到很多🥰
 
 插件市场可以搜到(speed up),
 
-https://github.com/user-attachments/assets/eeecf53c-9e8e-487c-955b-0ce9f6c1dd09
+
 
 ## 概述
 解析ast获取导出信息是通过单独封装npm包,所以ast所以相关操作函数都是放在这个包里
